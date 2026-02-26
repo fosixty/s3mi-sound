@@ -300,6 +300,34 @@ audio{
   border-color:rgba(255,43,43,.6);
 }
 
+/* Show more beats */
+.show-more-wrap{
+  display:flex;
+  justify-content:center;
+  margin:18px 0 0 0;
+}
+
+.show-more-btn{
+  padding:12px 22px;
+  border-radius:10px;
+  border:1px solid rgba(255,43,43,.6);
+  background:linear-gradient(180deg,#ff2b2b,#8f0000);
+  color:#fff;
+  font-weight:700;
+  letter-spacing:.03em;
+  cursor:pointer;
+  transition:opacity .2s, transform .2s;
+}
+
+.show-more-btn:hover{
+  opacity:.9;
+  transform:translateY(-1px);
+}
+
+.is-hidden{
+  display:none !important;
+}
+
 /* Instagram Section */
 
 .insta-section{
