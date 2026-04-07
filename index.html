@@ -17,9 +17,29 @@
       history.scrollRestoration = 'manual';
     }
 
+    const entryParams = new URLSearchParams(window.location.search);
+    const entryUA = navigator.userAgent || '';
+
+    function isSocialInAppBrowser() {
+      return /Instagram|FBAN|FBAV|FB_IAB|FB4A|FBIOS/i.test(entryUA);
+    }
+
+    function isInstagramTrackedEntry() {
+      const source = (entryParams.get('utm_source') || '').toLowerCase();
+      return source === 'ig' || source === 'instagram' || entryParams.has('fbclid');
+    }
+
+    function shouldIgnoreEntryHash() {
+      return Boolean(window.location.hash) && (isSocialInAppBrowser() || isInstagramTrackedEntry());
+    }
+
     // Instagram/Facebook in-app browsers can keep stale scroll positions.
     // Force top on initial entry unless the hash points to a real element.
     function hasValidAnchorHash() {
+      if (shouldIgnoreEntryHash()) {
+        return false;
+      }
+
       const hash = window.location.hash;
       if (!hash || hash === '#' || hash === '#_=_') {
         return false;
@@ -34,6 +54,11 @@
 
     function sanitizeHashIfNeeded() {
       const hash = window.location.hash;
+      if (shouldIgnoreEntryHash()) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        return;
+      }
+
       if (!hash || hash === '#_=_') {
         history.replaceState(null, '', window.location.pathname + window.location.search);
         return;
