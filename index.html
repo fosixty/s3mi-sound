@@ -1343,7 +1343,7 @@
       
       const playBtn = document.createElement('button');
       playBtn.className = 'play-btn';
-      playBtn.innerHTML = '▶';
+      playBtn.type = 'button';
       
       const progressContainer = document.createElement('div');
       progressContainer.className = 'progress-container';
@@ -1366,6 +1366,15 @@
       player.appendChild(progressContainer);
       
       audio.parentNode.insertBefore(player, audio);
+
+      function setPlayerState(isPlaying) {
+        playBtn.dataset.state = isPlaying ? 'pause' : 'play';
+        playBtn.innerHTML = `<span class="play-btn-icon" aria-hidden="true">${isPlaying ? '❚❚' : '▶'}</span>`;
+        playBtn.setAttribute('aria-label', isPlaying ? 'Pause preview' : 'Play preview');
+        player.classList.toggle('is-playing', isPlaying);
+      }
+
+      setPlayerState(false);
       
       // Update time display
       function formatTime(seconds) {
@@ -1377,33 +1386,44 @@
       
       // Update progress bar
       audio.addEventListener('timeupdate', () => {
-        const percent = (audio.currentTime / audio.duration) * 100;
+        const percent = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
         progressFill.style.width = percent + '%';
         timeDisplay.innerHTML = `<span>${formatTime(audio.currentTime)}</span><span>${formatTime(audio.duration)}</span>`;
+      });
+
+      audio.addEventListener('loadedmetadata', () => {
+        timeDisplay.innerHTML = `<span>${formatTime(0)}</span><span>${formatTime(audio.duration)}</span>`;
       });
       
       // Play/pause toggle
       playBtn.addEventListener('click', () => {
         if (audio.paused) {
           audio.play();
-          playBtn.innerHTML = '⏸';
         } else {
           audio.pause();
-          playBtn.innerHTML = '▶';
         }
       });
       
       // Update button when audio plays/pauses
       audio.addEventListener('play', () => {
-        playBtn.innerHTML = '⏸';
+        setPlayerState(true);
       });
       
       audio.addEventListener('pause', () => {
-        playBtn.innerHTML = '▶';
+        setPlayerState(false);
+      });
+
+      audio.addEventListener('ended', () => {
+        progressFill.style.width = '0%';
+        timeDisplay.innerHTML = `<span>${formatTime(0)}</span><span>${formatTime(audio.duration)}</span>`;
       });
       
       // Seek on progress bar click
       progressBar.addEventListener('click', (e) => {
+        if (!audio.duration) {
+          return;
+        }
+
         const rect = progressBar.getBoundingClientRect();
         const percent = (e.clientX - rect.left) / rect.width;
         audio.currentTime = percent * audio.duration;
