@@ -17,26 +17,54 @@
       history.scrollRestoration = 'manual';
     }
 
-    // Instagram/Facebook in-app browsers can restore old scroll positions.
-    // Force top on initial load unless there is a real anchor hash.
-    function hasRealHash() {
+    // Instagram/Facebook in-app browsers can keep stale scroll positions.
+    // Force top on initial entry unless the hash points to a real element.
+    function hasValidAnchorHash() {
       const hash = window.location.hash;
-      return Boolean(hash && hash !== '#_=_');
-    }
+      if (!hash || hash === '#' || hash === '#_=_') {
+        return false;
+      }
 
-    function resetInitialScroll() {
-      if (!hasRealHash()) {
-        window.scrollTo(0, 0);
+      try {
+        return Boolean(document.querySelector(hash));
+      } catch (_) {
+        return false;
       }
     }
 
-    if (window.location.hash === '#_=_') {
-      history.replaceState(null, '', window.location.pathname + window.location.search);
+    function sanitizeHashIfNeeded() {
+      const hash = window.location.hash;
+      if (!hash || hash === '#_=_') {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        return;
+      }
+
+      if (hash === '#') {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
     }
 
-    window.addEventListener('DOMContentLoaded', resetInitialScroll, { once: true });
-    window.addEventListener('load', resetInitialScroll, { once: true });
-    window.addEventListener('pageshow', resetInitialScroll);
+    function forceTopBriefly() {
+      if (hasValidAnchorHash()) {
+        return;
+      }
+
+      const start = performance.now();
+      const maxMs = 1400;
+      const tick = () => {
+        window.scrollTo(0, 0);
+        if (performance.now() - start < maxMs) {
+          requestAnimationFrame(tick);
+        }
+      };
+
+      requestAnimationFrame(tick);
+    }
+
+    sanitizeHashIfNeeded();
+    window.addEventListener('DOMContentLoaded', forceTopBriefly, { once: true });
+    window.addEventListener('load', forceTopBriefly, { once: true });
+    window.addEventListener('pageshow', forceTopBriefly);
   </script>
 </head>
 
