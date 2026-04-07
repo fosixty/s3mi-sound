@@ -13,7 +13,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script>
-    history.scrollRestoration = 'manual';
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // Instagram/Facebook in-app browsers can restore old scroll positions.
+    // Force top on initial load unless there is a real anchor hash.
+    function hasRealHash() {
+      const hash = window.location.hash;
+      return Boolean(hash && hash !== '#_=_');
+    }
+
+    function resetInitialScroll() {
+      if (!hasRealHash()) {
+        window.scrollTo(0, 0);
+      }
+    }
+
+    if (window.location.hash === '#_=_') {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    window.addEventListener('DOMContentLoaded', resetInitialScroll, { once: true });
+    window.addEventListener('load', resetInitialScroll, { once: true });
+    window.addEventListener('pageshow', resetInitialScroll);
   </script>
 </head>
 
